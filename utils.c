@@ -6,10 +6,48 @@ int	error(char *error_msg)
 	return (0);
 }
 
+long	get_time(void)
+{
+	struct timeval	tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+void	precise_sleep(t_data *data, long time_in_ms)
+{
+	long	start;
+
+	start = get_time();
+	while ((get_time() - start) < time_in_ms)
+	{
+		if (check_stop(data))
+			break ;
+		usleep(250);
+	}
+}
+
 void	safe_increment(t_coder *coder)
 {
 	pthread_mutex_lock(&coder->data->sched_mutex);
 	coder->compile_done++;
+	
+	if (coder->data->required_compiles != -1 && 
+		coder->compile_done == coder->data->required_compiles)
+	{
+		coder->data->finished_coders++;
+	}
+
+	if (coder->data->required_compiles != -1 && 
+		coder->data->finished_coders == coder->data->number_of_coders)
+	{
+		pthread_mutex_lock(&coder->data->stop_mutex);
+		coder->data->stop = 1;
+		pthread_mutex_unlock(&coder->data->stop_mutex);
+		
+		pthread_mutex_lock(&coder->data->table_mutex);
+		pthread_cond_broadcast(&coder->data->table_cond);
+		pthread_mutex_unlock(&coder->data->table_mutex);
+	}
 	pthread_mutex_unlock(&coder->data->sched_mutex);
 }
 
@@ -25,13 +63,6 @@ void	safe_print(t_data *data, int id, char *msg)
 	pthread_mutex_unlock(&data->print_mutex);
 }
 
-void	safe_stop(t_data *data, int value)
-{
-	pthread_mutex_lock(&data->stop_mutex);
-	data->stop = value;
-	pthread_mutex_unlock(&data->stop_mutex);
-}
-
 int	check_stop(t_data *data)
 {
 	int	stop;
@@ -42,16 +73,9 @@ int	check_stop(t_data *data)
 	return (stop);
 }
 
-// NOUVEAU : Remplace usleep() pour une précision parfaite
-void	precise_sleep(t_data *data, long time_in_ms)
+void	safe_stop(t_data *data, int value)
 {
-	long	start;
-
-	start = get_time();
-	while ((get_time() - start) < time_in_ms)
-	{
-		if (check_stop(data))
-			break ;
-		usleep(250);
-	}
+	pthread_mutex_lock(&data->stop_mutex);
+	data->stop = value;
+	pthread_mutex_unlock(&data->stop_mutex);
 }

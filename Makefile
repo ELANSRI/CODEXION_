@@ -6,10 +6,7 @@ CFLAGS      = -Wall -Wextra -Werror -pthread
 SRC         = codexion.c \
               parsing.c \
               init.c \
-              threads.c \
               routine.c \
-              edf_utils.c \
-              scheduler.c \
               monitor.c \
               utils.c
 
@@ -33,3 +30,4 @@ fclean: clean
 
 re: fclean all
 
+.PHONY: all clean fclean re
