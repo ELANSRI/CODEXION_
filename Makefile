@@ -6,9 +6,12 @@ CFLAGS      = -Wall -Wextra -Werror -pthread
 SRC         = codexion.c \
               parsing.c \
               init.c \
+              threads.c \
               routine.c \
+              arbitrator.c \
               monitor.c \
-              utils.c
+              utils.c \
+              state.c
 
 OBJ         = $(SRC:.c=.o)
 
