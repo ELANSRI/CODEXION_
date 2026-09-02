@@ -2,7 +2,7 @@
 
 int	is_coder_burned_out(t_data *data, t_coder *coder, long now)
 {
-	if (now - coder->last_compile >= data->time_to_burnout)
+	if (now - coder->last_compile > data->time_to_burnout + 5)
 	{
 		pthread_mutex_lock(&data->print_mutex);
 		pthread_mutex_lock(&data->stop_mutex);
